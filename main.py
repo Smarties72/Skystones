@@ -1,8 +1,11 @@
 import pygame
 import random
+import os
 
 pygame.init()
 pygame.mixer.init()
+
+path_img = os.getcwd() + "\\img\\gui\\"
 
 # Constantes
 WIDTH, HEIGHT = 800, 600
@@ -19,7 +22,7 @@ menu_bg_paths = ["menu1.jpg", "menu2.jpg", "menu3.jpg", "menu4.jpg", "menu5.jpg"
 menu_bg_images = []
 for path in menu_bg_paths:
     try:
-        img = pygame.image.load(path)
+        img = pygame.image.load(path_img + path)
         img = pygame.transform.scale(img, (WIDTH, HEIGHT))
         bright = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         bright.fill((BRIGHTNESS_ADJUST, BRIGHTNESS_ADJUST, BRIGHTNESS_ADJUST, 0))
@@ -27,19 +30,20 @@ for path in menu_bg_paths:
         menu_bg_images.append(img)
     except Exception as e:
         print(f"Erreur chargement background {path}: {e}")
+
 menu_bg_index = 0
 menu_bg_last_switch = pygame.time.get_ticks()
 MENU_BG_DELAY = 3000  # 3 secondes
 
-def load_music(state):
+def load_music(state, dir=f"{os.getcwd()}/img/gui/"):
     pygame.mixer.music.stop()
 
     music_map = {
-        "menu":        "musique de menu.mp3",
-        "game":        "musique de jeu.mp3",
-        "game_ai":     "musique de jeu.mp3",
-        "cards_view":  "musique carte.mp3",
-        "game_over":   "musique fin de partie.mp3",
+        "menu":        f"{dir}musique de menu.mp3",
+        "game":        f"{dir}musique de jeu.mp3",
+        "game_ai":     f"{dir}musique de jeu.mp3",
+        "cards_view":  f"{dir}musique carte.mp3",
+        "game_over":   f"{dir}musique fin de partie.mp3",
     }
 
     musique = music_map.get(state)
@@ -113,21 +117,21 @@ def draw_background():
         pygame.draw.line(screen, color, (0, y), (WIDTH, y))
 
 # Fonction pour charger les images des cartes
-def load_images():
+def load_images(dir = f"{os.getcwd()}/img/cards/"):
     images = {}
     card_width, card_height = 150, 150
     for i in range(1, 34):
-        image_path = f"Carte{i}.png"
+        image_path = f"{dir}/Carte{i}.png"
         try:
             image = pygame.image.load(image_path)
             image = pygame.transform.scale(image, (card_width, card_height))
             images[f"Carte{i}"] = image
-            print(f"Image {image_path} chargée et redimensionnée avec succès.")
         except pygame.error as e:
             print(f"Erreur de chargement de l'image {image_path}: {e}")
             temp_image = pygame.Surface((card_width, card_height))
             temp_image.fill(CARD_COLOR)
             images[f"Carte{i}"] = temp_image
+    print(f"Images des cartes chargée et redimensionnée avec succès.")
     return images
 
 # Fonction de dessin du menu avec trois boutons (Jouer, IA, Cartes)
