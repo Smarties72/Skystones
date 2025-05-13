@@ -55,14 +55,15 @@ def load_music(state):
 
   
 
+# Couleurs pour les cases selon le propriétaire
+PLAYER_CELL_COLOR = (173, 216, 230)   # Bleu clair (joueur se situant a gauche)
+OPPONENT_CELL_COLOR = (255, 182, 193)  # Rouge clair (joueur se situant a droite)
 
-PLAYER_CELL_COLOR = (173, 216, 230)   
-OPPONENT_CELL_COLOR = (255, 182, 193)  
-
-
+# Paramètre pour la difficulté de l'IA ("easy", "medium", "hard")
 ai_difficulty = "easy"
 
-
+# Définition des valeurs d'épines pour chaque carte.
+# Le tuple correspond à (haut, droite, bas, gauche)
 card_values = {f"Carte{i}": (1, 1, 1, 1) for i in range(1, 34)}
 card_values["Carte1"] = (3, 2, 0, 2)
 card_values["Carte2"] = (0, 0, 0, 4)
@@ -98,7 +99,7 @@ card_values["Carte31"] = (0, 1, 0, 1)
 card_values["Carte32"] = (1, 0, 0, 1)
 card_values["Carte33"] = (3, 0, 0, 3)
 
-
+# Fonction pour dessiner un fond dégradé
 def draw_background():
     top_color = (180, 220, 255)
     bottom_color = (255, 255, 255)
@@ -111,7 +112,7 @@ def draw_background():
         )
         pygame.draw.line(screen, color, (0, y), (WIDTH, y))
 
-
+# Fonction pour charger les images des cartes
 def load_images():
     images = {}
     card_width, card_height = 150, 150
@@ -129,6 +130,7 @@ def load_images():
             images[f"Carte{i}"] = temp_image
     return images
 
+# Fonction de dessin du menu avec trois boutons (Jouer, IA, Cartes)
 def draw_menu():
     overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 150))
@@ -148,7 +150,7 @@ def draw_menu():
                                                        cards_button.y + (cards_button.height - font.size("Cartes")[1])//2))
     return play_button, ia_button, cards_button
 
-
+# Fonction de dessin du plateau et des cartes déjà placées
 def draw_board():
     board_x = (WIDTH - (CELL_SIZE * GRID_SIZE)) // 2
     board_y = (HEIGHT - (CELL_SIZE * GRID_SIZE)) // 2
@@ -166,7 +168,7 @@ def draw_board():
                 card, owner = board_cards[row][col]
                 screen.blit(card_images[card], (cell_rect.x, cell_rect.y))
 
-
+# Fonction de dessin des cartes en main (version originale)
 def draw_hand_cards():
     for i, card in enumerate(player_cards):
         x, y = 20, 60 + i * 160
@@ -175,7 +177,7 @@ def draw_hand_cards():
         x, y = WIDTH - 170, 60 + i * 160
         screen.blit(card_images[card], (x, y))
 
-
+# Fonction de dessin des scores
 def draw_scores():
     player_score = 0
     opponent_score = 0
@@ -194,7 +196,7 @@ def draw_scores():
     screen.blit(opponent_text, (WIDTH // 2 + 20, 10))
     return player_score, opponent_score
 
-
+# Fonction pour obtenir l'indice de la case à partir des coordonnées de clic
 def get_grid_position(x, y):
     board_x = (WIDTH - (CELL_SIZE * GRID_SIZE)) // 2
     board_y = (HEIGHT - (CELL_SIZE * GRID_SIZE)) // 2
@@ -204,7 +206,7 @@ def get_grid_position(x, y):
         return row, col
     return None, None
 
-
+# Fonction pour placer une carte sur le plateau
 def place_card(row, col, card, hand):
     if board_cards[row][col] is None:
         board_cards[row][col] = (card, hand)
@@ -213,14 +215,15 @@ def place_card(row, col, card, hand):
         else:
             opponent_cards.remove(card)
 
-
+# Fonction pour vérifier et appliquer les règles de capture
 def check_flips(row, col):
     placed_card, placed_owner = board_cards[row][col]
     placed_vals = card_values[placed_card]
     directions = [(-1, 0, 0, 2), (0, 1, 1, 3), (1, 0, 2, 0), (0, -1, 3, 1)]
     wins = []
     losses = []
-  
+
+    # Collecter victoires et défaites du placé contre chaque voisin
     for dr, dc, p_idx, n_idx in directions:
         r, c = row + dr, col + dc
         if 0 <= r < GRID_SIZE and 0 <= c < GRID_SIZE and board_cards[r][c] is not None:
@@ -234,16 +237,18 @@ def check_flips(row, col):
 
     
     if wins:
+        # Flip des cartes adverses battues
         for r, c in wins:
             card, _ = board_cards[r][c]
             board_cards[r][c] = (card, placed_owner)
     elif losses:
+        # Si aucune victoire mais au moins une défaite, la carte placée est retournée
         r, c = losses[0]
         _, neighbor_owner = board_cards[r][c]
         board_cards[row][col] = (placed_card, neighbor_owner)
 
 
-
+# Fonction d'affichage de la galerie de toutes les cartes
 def draw_gallery(scroll_offset):
     draw_background()
     back_button = pygame.Rect(10, 10, 100, 40)
@@ -261,7 +266,7 @@ def draw_gallery(scroll_offset):
         x += 150 + spacing
     return back_button
 
-
+# Fonction d'initialisation du jeu (pour 2 joueurs ou mode IA)
 def init_game():
     global board_cards, player_cards, opponent_cards, deck, current_turn
     board_cards = [[None for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
@@ -272,7 +277,7 @@ def init_game():
     deck = all_cards[10:]
     current_turn = "player"
 
-
+# Fonction d'affichage de l'écran de fin de partie
 def draw_game_over(winner, player_score, opponent_score):
     draw_background()
     font = pygame.font.Font(None, 50)
@@ -293,7 +298,7 @@ def draw_game_over(winner, player_score, opponent_score):
                             menu_button.y + (menu_button.height - menu_text.get_height()) // 2))
     return menu_button
 
-
+# Fonction d'évaluation d'un coup pour l'IA
 def evaluate_move(card, row, col, hand):
     placed_vals = card_values[card]
     gain = 0
@@ -311,7 +316,7 @@ def evaluate_move(card, row, col, hand):
                     gain -= 1
     return gain
 
-
+# Fonction de décision de l'IA pour choisir un coup
 def ai_move():
     moves = []
     for card in opponent_cards:
@@ -334,25 +339,25 @@ def ai_move():
                 best_move = move
         return best_move
 
-
+# Création de la fenêtre
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Skystones - Prototype")
 
 card_images = load_images()
 init_game()
 
-
+# Variables pour le glisser-déposer
 selected_card = None
 selected_card_position = None
-selected_card_hand = None  
+selected_card_hand = None  # "player" ou "opponent"
 
-
+# Variable pour gérer les tours ("player" ou "opponent")
 current_turn = "player"
 
-
+# Variable pour le défilement de la galerie
 scroll_offset = 0
 
-
+# États possibles : "menu", "game", "game_ai", "cards_view", "game_over"
 state = "menu"
 previous_state = None
 running = True
@@ -388,6 +393,7 @@ while running:
             pygame.draw.rect(screen, border_color, highlight_rect, 3, border_radius=10)
     elif state == "game_ai":
         draw_background(); draw_board(); draw_hand_cards(); draw_scores()
+        # IA réfléchit
         if current_turn == "opponent":
             now = pygame.time.get_ticks()
             if ai_thinking:
@@ -402,11 +408,14 @@ while running:
                         check_flips(r, c)
                     ai_thinking = False
                     current_turn = "player"
+                    # vérif fin
                     if all(all(cell for cell in row) for row in board_cards):
                         state = "game_over"
             else:
+                # lancement du délai
                 ai_thinking = True
                 ai_start_time = now
+        # highlight éventuel
         if selected_card:
             pygame.draw.rect(screen, BLUE, pygame.Rect(selected_card_position[0]-5, selected_card_position[1]-5, CELL_SIZE+10, CELL_SIZE+10), 3, border_radius=10)
     elif state == "cards_view":
@@ -432,6 +441,7 @@ while running:
                     state = "cards_view"
             elif state == "game":
                 x, y = event.pos
+                # Gestion pour les deux joueurs humains
                 if current_turn == "player":
                     for i, card in enumerate(player_cards):
                         rect = pygame.Rect(20, 60 + i * 160, 150, 150)
@@ -447,6 +457,7 @@ while running:
                             selected_card_position = (WIDTH - 170, 60 + i * 160)
                             selected_card_hand = "opponent"
             elif state == "game_ai":
+                # En mode IA, seul le joueur humain peut jouer
                 if current_turn == "player":
                     x, y = event.pos
                     for i, card in enumerate(player_cards):
