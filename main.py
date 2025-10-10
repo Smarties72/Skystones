@@ -1,5 +1,7 @@
 import pygame
 import random
+import math
+import os
 
 pygame.init()
 pygame.mixer.init()
@@ -17,7 +19,7 @@ CARD_COLOR = (100, 200, 100)  # Couleur par défaut pour les cartes
 tuto_page = 0
 
 BRIGHTNESS_ADJUST = 60
-menu_bg_paths = ["images/menu1.jpg", "images/menu2.jpg", "images/menu3.jpg", "images/menu4.jpg", "images/menu5.jpg", "images/menu6.jpg" ,"images/menu7.jpg", "images/menu8.jpg", "images/menu9.jpg", "images/menu10.jpg", "images/menu11.jpg", "images/menu12.jpg", "images/menu13.jpg", "images/menu14.jpg", "images/menu15.jpg"] 
+menu_bg_paths = ["img/gui/menu1.jpg", "img/gui/menu2.jpg", "img/gui/menu3.jpg", "img/gui/menu4.jpg", "img/gui/menu5.jpg", "img/gui/menu6.jpg" ,"img/gui/menu7.jpg", "img/gui/menu8.jpg", "img/gui/menu9.jpg", "img/gui/menu10.jpg", "img/gui/menu11.jpg", "img/gui/menu12.jpg", "img/gui/menu13.jpg", "img/gui/menu14.jpg", "img/gui/menu15.jpg"] 
 menu_bg_images = []
 for path in menu_bg_paths:
     try:
@@ -34,14 +36,22 @@ menu_bg_last_switch = pygame.time.get_ticks()
 MENU_BG_DELAY = 3000  # 3 secondes
 
 def load_music(state):
+    global selected_music
     pygame.mixer.music.stop()
-
+    if selected_music and state not in ("game", "game_ai"):
+        try:
+            pygame.mixer.music.load(f"img/gui/{selected_music}")
+            pygame.mixer.music.set_volume(0.5)
+            pygame.mixer.music.play(-1)
+        except Exception as e:
+            print(f"[load_music] Erreur chargement «{selected_music}» : {e}")
+        return
     music_map = {
-        "menu":        "images/musique de menu.mp3",
-        "game":        "images/musique de jeu.mp3",
-        "game_ai":     "images/musique de jeu.mp3",
-        "cards_view":  "images/musique carte.mp3",
-        "game_over":   "images/musique fin de partie.mp3",
+        "menu":        "img/gui/musique de menu.mp3",
+        "game":        "img/gui/musique de jeu.mp3",
+        "game_ai":     "img/gui/musique de jeu.mp3",
+        "cards_view":  "img/gui/musique carte.mp3",
+        "game_over":   "img/gui/musique fin de partie.mp3",
     }
 
     musique = music_map.get(state)
@@ -118,7 +128,7 @@ def load_images():
     images = {}
     card_width, card_height = 150, 150
     for i in range(1, 34):
-        image_path = f"images/Carte{i}.png"
+        image_path = f"img/cards/Carte{i}.png"
         try:
             image = pygame.image.load(image_path)
             image = pygame.transform.scale(image, (card_width, card_height))
@@ -132,27 +142,28 @@ def load_images():
     return images
 
 def draw_menu() :
-    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-    overlay.fill((0, 0, 0, 150))
-    screen.blit(overlay, (0, 0))
     font = pygame.font.Font(None, 50)
-    play_button  = pygame.Rect(300,150,200,50)
-    ia_button    = pygame.Rect(300,230,200,50)
-    cards_button = pygame.Rect(300,310,200,50)
-    tuto_button  = pygame.Rect(300,390,200,50)   # Nouveau bouton
-    pygame.draw.rect(screen, RED,  play_button, border_radius=10)
-    pygame.draw.rect(screen, BLUE, ia_button, border_radius=10)
-    pygame.draw.rect(screen, RED,  cards_button, border_radius=10)
-    pygame.draw.rect(screen, BLUE, tuto_button, border_radius=10)   # Nouveau bouton
-    screen.blit(font.render("Jouer", True, WHITE), (play_button.x + (play_button.width - font.size("Jouer")[0])//2,
-                                                         play_button.y + (play_button.height - font.size("Jouer")[1])//2))
-    screen.blit(font.render("IA", True, WHITE),   (ia_button.x + (ia_button.width - font.size("IA")[0])//2,
-                                                     ia_button.y + (ia_button.height - font.size("IA")[1])//2))
-    screen.blit(font.render("Cartes", True, WHITE),(cards_button.x + (cards_button.width - font.size("Cartes")[0])//2,
-                                                       cards_button.y + (cards_button.height - font.size("Cartes")[1])//2))
-    screen.blit(font.render("Tuto", True, WHITE),(tuto_button.x + (tuto_button.width - font.size("Tuto")[0])//2,
-                                                       tuto_button.y + (tuto_button.height - font.size("Tuto")[1])//2))
-    return play_button, ia_button, cards_button, tuto_button
+    # Boutons centrés
+    jouer_button = pygame.Rect(300, 180, 200, 60)
+    tuto_button = pygame.Rect(300, 270, 200, 60)
+    biblio_button = pygame.Rect(300, 360, 200, 60)
+    gear_button = pygame.Rect(WIDTH-80, HEIGHT-80, 60, 60)
+    pygame.draw.rect(screen, RED, jouer_button, border_radius=10)
+    pygame.draw.rect(screen, BLUE, tuto_button, border_radius=10)
+    pygame.draw.rect(screen, RED, biblio_button, border_radius=10)
+    pygame.draw.circle(screen, BLACK, gear_button.center, 30)
+    for i in range(8):
+        angle = i * (360/8)
+        x = gear_button.centerx + int(38 * math.cos(math.radians(angle)))
+        y = gear_button.centery + int(38 * math.sin(math.radians(angle)))
+        pygame.draw.circle(screen, BLACK, (x, y), 7)
+    screen.blit(font.render("Jouer", True, WHITE), (jouer_button.x + (jouer_button.width - font.size("Jouer")[0])//2,
+                                                    jouer_button.y + (jouer_button.height - font.size("Jouer")[1])//2))
+    screen.blit(font.render("Tuto", True, WHITE), (tuto_button.x + (tuto_button.width - font.size("Tuto")[0])//2,
+                                                   tuto_button.y + (tuto_button.height - font.size("Tuto")[1])//2))
+    screen.blit(font.render("Bibliothèque", True, WHITE), (biblio_button.x + (biblio_button.width - font.size("Bibliothèque")[0])//2,
+                                                           biblio_button.y + (biblio_button.height - font.size("Bibliothèque")[1])//2))
+    return jouer_button, tuto_button, biblio_button, gear_button
 
 
 def draw_board():
@@ -181,7 +192,6 @@ def draw_hand_cards():
         x, y = WIDTH - 170, 60 + i * 160
         screen.blit(card_images[card], (x, y))
 
-
 def draw_scores():
     player_score = 0
     opponent_score = 0
@@ -199,6 +209,38 @@ def draw_scores():
     screen.blit(player_text, (WIDTH // 2 - player_text.get_width() - 20, 10))
     screen.blit(opponent_text, (WIDTH // 2 + 20, 10))
     return player_score, opponent_score
+
+def draw_biblio():
+    draw_background()
+    font = pygame.font.Font(None, 48)
+    cartes_button = pygame.Rect(300, 220, 200, 60)
+    back_button = pygame.Rect(20, 20, 120, 50)
+    pygame.draw.rect(screen, BLUE, cartes_button, border_radius=10)
+    pygame.draw.rect(screen, RED, back_button, border_radius=10)
+    screen.blit(font.render("Cartes", True, WHITE), (cartes_button.x + (cartes_button.width - font.size("Cartes")[0])//2,
+                                                     cartes_button.y + (cartes_button.height - font.size("Cartes")[1])//2))
+    screen.blit(font.render("Retour", True, WHITE), (back_button.x + 10, back_button.y + 10))
+    return cartes_button, back_button
+
+def draw_play_modes():
+    draw_background()
+    font = pygame.font.Font(None, 48)
+    mode_1v1_btn = pygame.Rect(300, 140, 200, 60)
+    mode_ia_btn = pygame.Rect(300, 230, 200, 60)
+    campagne_btn = pygame.Rect(300, 320, 200, 60)
+    back_button = pygame.Rect(20, 20, 120, 50)
+    pygame.draw.rect(screen, RED, mode_1v1_btn, border_radius=10)
+    pygame.draw.rect(screen, BLUE, mode_ia_btn, border_radius=10)
+    pygame.draw.rect(screen, RED, campagne_btn, border_radius=10)
+    pygame.draw.rect(screen, RED, back_button, border_radius=10)
+    screen.blit(font.render("1V1", True, WHITE), (mode_1v1_btn.x + (mode_1v1_btn.width - font.size("1V1")[0])//2,
+                                                  mode_1v1_btn.y + (mode_1v1_btn.height - font.size("1V1")[1])//2))
+    screen.blit(font.render("IA versus", True, WHITE), (mode_ia_btn.x + (mode_ia_btn.width - font.size("IA versus")[0])//2,
+                                                        mode_ia_btn.y + (mode_ia_btn.height - font.size("IA versus")[1])//2))
+    screen.blit(font.render("Campagne", True, WHITE), (campagne_btn.x + (campagne_btn.width - font.size("Campagne")[0])//2,
+                                                       campagne_btn.y + (campagne_btn.height - font.size("Campagne")[1])//2))
+    screen.blit(font.render("Retour", True, WHITE), (back_button.x + 10, back_button.y + 10))
+    return mode_1v1_btn, mode_ia_btn, campagne_btn, back_button
 
 def draw_tuto(tuto_page):
     draw_background()
@@ -403,6 +445,47 @@ def draw_tuto(tuto_page):
 
     return back_button, arrow_left, arrow_right
 
+def draw_music_select(selected_music):
+    # Dégradé vertical bleu-violet
+    for y in range(HEIGHT):
+        ratio = y / HEIGHT
+        color = (
+            int(60 * (1 - ratio) + 120 * ratio),   # du bleu au violet
+            int(60 * (1 - ratio) + 40 * ratio),
+            int(120 * (1 - ratio) + 180 * ratio)
+        )
+        pygame.draw.line(screen, color, (0, y), (WIDTH, y))
+
+    font = pygame.font.Font(None, 36)
+    back_button = pygame.Rect(20, 20, 120, 50)
+    pygame.draw.rect(screen, RED, back_button, border_radius=10)
+    screen.blit(font.render("Retour", True, WHITE), (back_button.x + 10, back_button.y + 10))
+    # Liste des musiques
+    music_files = [f for f in os.listdir("img/gui") if f.endswith(".mp3") and f not in musics_to_remove]
+    y_start = 100 + music_scroll_offset
+    select_buttons = []
+    for music in music_files:
+        music_name = music[:-4]
+        text = font.render(music_name, True, WHITE)
+        screen.blit(text, (80, y_start))
+        
+        # Dessine la note de musique à droite du nom
+        note_x = 80 + text.get_width() + 30
+        note_y = y_start + 15
+        pygame.draw.circle(screen, (255, 255, 255), (note_x, note_y), 10)
+        pygame.draw.line(screen, (255, 255, 255), (note_x, note_y-10), (note_x, note_y-25), 4)
+        pygame.draw.line(screen, (255, 255, 255), (note_x, note_y-25), (note_x+7, note_y-18), 4)
+
+        # Case de sélection tout à droite
+        select_rect = pygame.Rect(WIDTH - 80, y_start, 30, 30)
+        pygame.draw.rect(screen, BLUE if selected_music == music else (200, 200, 200), select_rect, border_radius=5)
+        if selected_music == music:
+            pygame.draw.line(screen, WHITE, (select_rect.x+5, select_rect.y+15), (select_rect.x+15, select_rect.y+25), 4)
+            pygame.draw.line(screen, WHITE, (select_rect.x+15, select_rect.y+25), (select_rect.x+25, select_rect.y+5), 4)
+        select_buttons.append((select_rect, music))
+        y_start += 50
+    return back_button, select_buttons
+
 def get_grid_position(x, y):
     board_x = (WIDTH - (CELL_SIZE * GRID_SIZE)) // 2
     board_y = (HEIGHT - (CELL_SIZE * GRID_SIZE)) // 2
@@ -553,12 +636,13 @@ init_game()
 selected_card = None
 selected_card_position = None
 selected_card_hand = None  
-
+selected_music = None
 
 current_turn = "player"
 
 
 scroll_offset = 0
+music_scroll_offset = 0  # Ajoute cette variable globale
 
 
 state = "menu"
@@ -573,6 +657,20 @@ font_think     = pygame.font.Font(None, 50)
 tuto_page = 0  # 0 = accueil, 1 = plateau, 2 = carte
 
 
+musics_to_remove = [
+    "musique carte.mp3",
+    "musique de jeu.mp3",
+    "musique de menu.mp3",
+    "musique fin de partie.mp3",
+]
+
+
+dragging_card = None
+dragging_hand = None
+drag_offset_x = 0
+drag_offset_y = 0
+dragging_pos = None
+
 while running:
     now = pygame.time.get_ticks()
     if state != previous_state:
@@ -580,13 +678,24 @@ while running:
         previous_state = state
 
     if state == "menu":
-        play_button, ia_button, cards_button, tuto_button = draw_menu()
         if menu_bg_images and now - menu_bg_last_switch >= MENU_BG_DELAY:
             menu_bg_index = (menu_bg_index + 1) % len(menu_bg_images)
             menu_bg_last_switch = now
         if menu_bg_images:
             screen.blit(menu_bg_images[menu_bg_index], (0, 0))
-        play_btn, ia_btn, cards_btn, tuto_button = draw_menu()
+        else:
+            draw_background()
+        jouer_btn, tuto_btn, biblio_btn, gear_btn = draw_menu()
+    elif state == "play_modes":
+        mode_1v1_btn, mode_ia_btn, campagne_btn, back_btn = draw_play_modes()
+    elif state == "biblio":
+        cartes_btn, back_btn = draw_biblio()
+    elif state == "tuto":
+        back_btn, arrow_left, arrow_right = draw_tuto(tuto_page)
+    elif state == "music_select":
+        back_btn, select_buttons = draw_music_select(selected_music)
+    elif state == "cards_view":
+        back_btn = draw_gallery(scroll_offset)
     elif state == "game":
         draw_background()
         draw_board()
@@ -597,7 +706,20 @@ while running:
             border_color = RED if selected_card_hand == "opponent" else BLUE
             pygame.draw.rect(screen, border_color, highlight_rect, 3, border_radius=10)
     elif state == "game_ai":
-        draw_background(); draw_board(); draw_hand_cards(); draw_scores()
+        draw_background()
+        draw_board()
+        draw_hand_cards()
+        draw_scores()
+        # Effet visuel du drag & drop
+        if dragging_card and dragging_pos:
+            highlight_rect = pygame.Rect(dragging_pos[0] - drag_offset_x - 5, dragging_pos[1] - drag_offset_y - 5, 160, 160)
+            pygame.draw.rect(screen, BLUE, highlight_rect, 3, border_radius=10)
+        # Effet classique (si sélection sans drag)
+        if selected_card is not None and selected_card_position is not None:
+            highlight_rect = pygame.Rect(selected_card_position[0]-5, selected_card_position[1]-5, 160, 160)
+            border_color = RED if selected_card_hand == "opponent" else BLUE
+            pygame.draw.rect(screen, border_color, highlight_rect, 3, border_radius=10)
+        # IA réfléchit...
         if current_turn == "opponent":
             now = pygame.time.get_ticks()
             if ai_thinking:
@@ -617,46 +739,41 @@ while running:
             else:
                 ai_thinking = True
                 ai_start_time = now
-        if selected_card:
-            pygame.draw.rect(screen, BLUE, pygame.Rect(selected_card_position[0]-5, selected_card_position[1]-5, CELL_SIZE+10, CELL_SIZE+10), 3, border_radius=10)
-    elif state == "cards_view":
-        back_btn = draw_gallery(scroll_offset)
     elif state == "game_over":
         p_s, o_s = draw_scores()
-        winner = "player" if p_s>o_s else ("opponent" if o_s>p_s else "draw")
+        winner = "player" if p_s > o_s else ("opponent" if o_s > p_s else "draw")
         menu_btn = draw_game_over(winner, p_s, o_s)
-    elif state == "tuto":
-        back_btn, arrow_left, arrow_right = draw_tuto(tuto_page)
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if back_btn.collidepoint(event.pos):
-                    state = "menu"
-                    tuto_page = 0
-                elif arrow_left.collidepoint(event.pos) and tuto_page > 0:
-                    tuto_page -= 1
-                elif arrow_right.collidepoint(event.pos) and tuto_page < 5:
-                    tuto_page += 1
-    
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if state == "menu":
-                if play_button.collidepoint(event.pos):
+                if jouer_btn.collidepoint(event.pos):
+                    state = "play_modes"  
+                elif tuto_btn.collidepoint(event.pos):
+                    state = "tuto"
+                elif biblio_btn.collidepoint(event.pos):
+                    state = "biblio"
+                elif gear_btn.collidepoint(event.pos):
+                    state = "music_select"
+            elif state == "biblio":
+                if cartes_btn.collidepoint(event.pos):
+                    state = "cards_view"
+                elif back_btn.collidepoint(event.pos):
+                    state = "menu"
+            elif state == "play_modes":
+                if mode_1v1_btn.collidepoint(event.pos):
                     init_game()
                     state = "game"
-                elif ia_button.collidepoint(event.pos):
+                elif mode_ia_btn.collidepoint(event.pos):
                     init_game()
                     state = "game_ai"
-                elif cards_button.collidepoint(event.pos):
-                    state = "cards_view"
-                elif tuto_button.collidepoint(event.pos):   # Nouveau bouton
-                    state = "tuto"
+                elif back_btn.collidepoint(event.pos):
+                    state = "menu"
             elif state == "game":
-                x, y = event.pos
+                # Sélection d'une carte dans la main du joueur ou de l'adversaire
                 if current_turn == "player":
                     for i, card in enumerate(player_cards):
                         rect = pygame.Rect(20, 60 + i * 160, 150, 150)
@@ -673,7 +790,6 @@ while running:
                             selected_card_hand = "opponent"
             elif state == "game_ai":
                 if current_turn == "player":
-                    x, y = event.pos
                     for i, card in enumerate(player_cards):
                         rect = pygame.Rect(20, 60 + i * 160, 150, 150)
                         if rect.collidepoint(event.pos):
@@ -682,26 +798,32 @@ while running:
                             selected_card_hand = "player"
             elif state == "cards_view":
                 if back_btn.collidepoint(event.pos):
-                    state = "menu"
-                    previous_state = None
-
-                    previous_state = None
+                    state = "biblio"
             elif state == "game_over":
-                if menu_btn.collidepoint(event.pos):
+                if menu_btn and menu_btn.collidepoint(event.pos):
                     state = "menu"
-                    previous_state = None
             elif state == "tuto":
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if back_btn.collidepoint(event.pos):
-                        state = "menu"
-                        previous_state = None
+                if back_btn.collidepoint(event.pos):
+                    state = "menu"
+                elif arrow_left.collidepoint(event.pos) and tuto_page > 0:
+                    tuto_page -= 1
+                elif arrow_right.collidepoint(event.pos) and tuto_page < 5:
+                    tuto_page += 1
+            elif state == "music_select":
+                if back_btn.collidepoint(event.pos):
+                    state = "menu"
+                for rect, music in select_buttons:
+                    if rect.collidepoint(event.pos):
+                        selected_music = music
+                        pygame.mixer.music.stop()
+                        pygame.mixer.music.load(f"img/gui/{selected_music}")
+                        pygame.mixer.music.play(-1)
 
-        
         elif event.type == pygame.MOUSEMOTION:
             if (state == "game" or state == "game_ai") and selected_card is not None:
                 mx, my = event.pos
                 selected_card_position = (mx - 75, my - 75)
-        
+
         elif event.type == pygame.MOUSEBUTTONUP:
             if (state == "game" or state == "game_ai") and selected_card is not None:
                 x, y = event.pos
@@ -709,34 +831,90 @@ while running:
                 if row is not None and col is not None and board_cards[row][col] is None:
                     place_card(row, col, selected_card, selected_card_hand)
                     check_flips(row, col)
-                    current_turn = "opponent" if current_turn == "player" else "player"
-                    full = True
-                    for r in range(GRID_SIZE):
-                        for c in range(GRID_SIZE):
-                            if board_cards[r][c] is None:
-                                full = False
-                                break
-                        if not full:
-                            break
+                    # Tour suivant
+                    if state == "game_ai":
+                        current_turn = "opponent" if current_turn == "player" else "player"
+                    else:
+                        current_turn = "opponent" if current_turn == "player" else "player"
+                    # Fin de partie
+                    full = all(all(cell for cell in row) for row in board_cards)
                     if full:
                         state = "game_over"
                 selected_card = None
                 selected_card_position = None
                 selected_card_hand = None
-        
-        elif state == "cards_view":
-            if event.type == pygame.KEYDOWN:
+
+        elif event.type == pygame.KEYDOWN:
+            if state == "music_select":
+                if event.key == pygame.K_UP:
+                    music_scroll_offset += 50
+                elif event.key == pygame.K_DOWN:
+                    music_scroll_offset -= 50
+            elif state == "cards_view":
                 if event.key == pygame.K_LEFT:
-                    scroll_offset += 60
+                    scroll_offset += 50
                 elif event.key == pygame.K_RIGHT:
-                    scroll_offset -= 60
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 4:
-                    scroll_offset += 60
-                elif event.button == 5:
-                    scroll_offset -= 60
-                    
+                    scroll_offset -= 50
+                
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if state in ("game", "game_ai"):
+                # Démarre le drag si on clique sur une carte
+                if current_turn == "player":
+                    for i, card in enumerate(player_cards):
+                        x, y = 20, 60 + i * 160
+                        rect = pygame.Rect(x, y, 150, 150)
+                        if rect.collidepoint(event.pos):
+                            dragging_card = card
+                            dragging_hand = "player"
+                            drag_offset_x = event.pos[0] - x
+                            drag_offset_y = event.pos[1] - y
+                            dragging_pos = event.pos
+                elif current_turn == "opponent" and state == "game":
+                    for i, card in enumerate(opponent_cards):
+                        x, y = WIDTH - 170, 60 + i * 160
+                        rect = pygame.Rect(x, y, 150, 150)
+                        if rect.collidepoint(event.pos):
+                            dragging_card = card
+                            dragging_hand = "opponent"
+                            drag_offset_x = event.pos[0] - x
+                            drag_offset_y = event.pos[1] - y
+                            dragging_pos = event.pos
+        elif event.type == pygame.MOUSEMOTION:
+            if dragging_card:
+                dragging_pos = event.pos
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if dragging_card and dragging_pos:
+                # Vérifie si on relâche sur une case du plateau
+                board_x = (WIDTH - (CELL_SIZE * GRID_SIZE)) // 2
+                board_y = (HEIGHT - (CELL_SIZE * GRID_SIZE)) // 2
+                for row in range(GRID_SIZE):
+                    for col in range(GRID_SIZE):
+                        cell_rect = pygame.Rect(board_x + col * CELL_SIZE, board_y + row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                        if cell_rect.collidepoint(dragging_pos) and board_cards[row][col] is None:
+                            place_card(row, col, dragging_card, dragging_hand)
+                            check_flips(row, col)
+                            dragging_card = None
+                            dragging_hand = None
+                            dragging_pos = None
+                            if state == "game_ai":
+                                current_turn = "opponent"
+                            else:
+                                current_turn = "opponent" if current_turn == "player" else "player"
+                            break
+                else:
+                    # Si pas posé sur le plateau, annule le drag
+                    dragging_card = None
+                    dragging_hand = None
+                    dragging_pos = None
+            # Tour de l'IA
+            if state == "game_ai" and current_turn == "opponent":
+                move = ai_move()
+                if move:
+                    card, row, col = move
+                    place_card(row, col, card, "opponent")
+                    check_flips(row, col)
+                    current_turn = "player"
+
     pygame.display.flip()
 
 pygame.quit()
-
